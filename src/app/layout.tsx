@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   title: "ReDoc - Your Privacy-First Redaction Tool",
   description:
     "Securely redact personally identifiable information from your documents using advanced AI.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
