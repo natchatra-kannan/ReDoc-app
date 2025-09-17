@@ -1,10 +1,5 @@
 import type {NextConfig} from 'next';
 
-const withPWA = require('@ducanh2912/next-pwa').default({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-});
-
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
@@ -37,4 +32,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+let config = nextConfig;
+
+if (process.env.NODE_ENV === 'production') {
+  const withPWA = require('@ducanh2912/next-pwa').default({
+    dest: 'public',
+  });
+  config = withPWA(config);
+}
+
+
+export default config;
