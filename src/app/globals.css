@@ -3,30 +3,30 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 0 0% 94.1%; /* #F0F0F0 */
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
+    --primary: 210 12.5% 50.2%; /* #708090 */
     --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
+    --accent: 300 24.1% 85.3%; /* #D8BFD8 */
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --ring: 210 12.5% 50.2%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -43,25 +43,25 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
+    --primary: 210 12.5% 70.2%;
     --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
+    --muted: 240 3.7% 15.9%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --accent: 300 15.1% 60.3%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 210 12.5% 70.2%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -85,4 +85,87 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Text Cursor Animation */
+.text-cursor::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Prism Background */
+.prism-background {
+    position: relative;
+    overflow: hidden;
+    background-color: hsl(var(--background));
+}
+
+.prism-background::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        conic-gradient(from 90deg at 1px 1px, #0000 90deg, hsl(var(--primary) / 0.2) 0),
+        conic-gradient(from -90deg at 0 0, #0000 90deg, hsl(var(--primary) / 0.2) 0);
+    background-size: 2rem 2rem;
+    animation: prism-move 20s linear infinite;
+    z-index: 0;
+}
+
+@keyframes prism-move {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 2rem 2rem;
+    }
+}
+
+/* Electric Border */
+.electric-border {
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.electric-border.active {
+  --angle: 0deg;
+  border-image: conic-gradient(from var(--angle), hsl(var(--background)), hsl(var(--accent)), hsl(var(--background))) 1;
+  animation: 5s rotate linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    --angle: 360deg;
+  }
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* PII Redaction blur style */
+.redacted-pii {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: hsla(330, 100%, 90%, 0.5); /* Baby pink with transparency */
+  border-radius: 4px;
+  padding: 0 2px;
+  display: inline-block;
+  font-weight: 500;
+  color: transparent;
+  user-select: none;
 }
