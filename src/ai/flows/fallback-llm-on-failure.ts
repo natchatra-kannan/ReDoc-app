@@ -13,7 +13,11 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const RedactWithFallbackInputSchema = z.object({
-  documentContent: z.string().describe('The content of the document to redact.'),
+  documentContent: z
+    .string()
+    .describe(
+      "The document to redact, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
   llmSelection: z.enum(['GPT-3.5', 'LLaMA', 'Gemma 2']).default('GPT-3.5').describe('The LLM to use for redaction.'),
 });
 export type RedactWithFallbackInput = z.infer<typeof RedactWithFallbackInputSchema>;
@@ -31,11 +35,16 @@ export async function redactWithFallback(input: RedactWithFallbackInput): Promis
 const redactPrompt = ai.definePrompt({
   name: 'redactPrompt',
   input: {schema: RedactWithFallbackInputSchema},
-  output: {schema: RedactWithFallbackOutputSchema},
+  output: {schema: z.object({ redactedContent: z.string() }) },
   prompt: `You are an AI assistant specializing in redacting Personally Identifiable Information (PII) from documents.
-  Your task is to identify and redact PII in the following document content. Replace any identified PII with a visual blur (baby pink colored glass blur).
-  The document content is as follows:
-  \n\n{{{documentContent}}}\n\n  Return the redacted content.`,
+Your task is to identify and redact PII from the document provided.
+First, extract all the text from the document.
+Then, replace any identified PII (Names, addresses, phone numbers, signatures, IDs) with the string '[REDACTED]'.
+Finally, return the full extracted text with the redactions applied.
+
+Document:
+{{media url=documentContent}}
+`,
 });
 
 const redactWithFallbackFlow = ai.defineFlow(
@@ -47,22 +56,22 @@ const redactWithFallbackFlow = ai.defineFlow(
   async input => {
     const llms = ['GPT-3.5', 'LLaMA', 'Gemma 2'];
     let currentLlmIndex = llms.indexOf(input.llmSelection);
+    if (currentLlmIndex === -1) currentLlmIndex = 0;
+
     let lastError: Error | null = null;
 
     while (currentLlmIndex < llms.length) {
-      const llm = llms[currentLlmIndex];
+      const llm = llms[currentLlmIndex] as 'GPT-3.5' | 'LLaMA' | 'Gemma 2';
       try {
-        // Dynamically select the model here based on the current LLM in the loop.  No models have
-        // been set up outside of the googleAI defaults in genkit.ts, so this code will only work
-        // after the OpenAI and HuggingFace plugins are installed and configured.
-        // Also the underlying `ai.generate` calls (in ai.definePrompt) must be configured
-        // with the safetySettings as described in the documentation.
         const {output} = await redactPrompt({
           ...input,
           llmSelection: llm,
         });
+        if (!output) {
+          throw new Error('No output from redaction prompt');
+        }
         return {
-          redactedContent: output!.redactedContent,
+          redactedContent: output.redactedContent,
           llmUsed: llm,
         };
       } catch (error: any) {

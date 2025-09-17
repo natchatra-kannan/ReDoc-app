@@ -17,7 +17,7 @@ import { UploadCloud, FileText, Download, AlertCircle, Loader2 } from "lucide-re
 import Image from "next/image";
 
 type Status = "idle" | "preview" | "redacting" | "success" | "error";
-type LLMOption = "GPT-3.5" | "LaMDA" | "Gemma 2";
+type LLMOption = "GPT-3.5" | "LLaMA" | "Gemma 2";
 
 export default function RedactionWorkflow() {
   const { user } = useAuth();
@@ -165,8 +165,8 @@ export default function RedactionWorkflow() {
                       <Label htmlFor="llm-gpt">GPT-3.5 (Fast & Reliable)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="LaMDA" id="llm-llama" />
-                      <Label htmlFor="llm-llama">LaMDA (Balanced)</Label>
+                      <RadioGroupItem value="LLaMA" id="llm-llama" />
+                      <Label htmlFor="llm-llama">LLaMA (Balanced)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="Gemma 2" id="llm-gemma" />
@@ -181,7 +181,7 @@ export default function RedactionWorkflow() {
               )}
                {status === "success" && redactedContent && (
                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg bg-muted/20 min-h-[300px] overflow-auto max-h-[70vh]">
+                    <div className="p-4 border rounded-lg bg-muted/20 min-h-[300px] overflow-auto max-h-[70vh] whitespace-pre-wrap">
                         <div dangerouslySetInnerHTML={{ __html: redactedContent.replace(/\[REDACTED\]/g, '<span class="redacted-pii">[REDACTED]</span>') }} />
                     </div>
                     <div className="flex gap-2">

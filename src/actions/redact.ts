@@ -7,7 +7,7 @@ import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/fi
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { z } from "zod";
 
-const LlmEnum = z.enum(["GPT-3.5", "LaMDA", "Gemma 2"]);
+const LlmEnum = z.enum(["GPT-3.5", "LLaMA", "Gemma 2"]);
 
 type RedactActionResult = {
   success: boolean;
