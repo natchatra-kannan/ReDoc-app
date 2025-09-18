@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
+import { LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,26 +16,27 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function AuthButton() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
-  const handleSignOut = async () => {
-    await auth.signOut();
+  const handleSignOut = () => {
+    logout();
     router.push("/");
   };
 
   if (user) {
+    const initial = user.displayName?.charAt(0) ?? user.email?.charAt(0) ?? 'U';
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-9 w-9">
-              <AvatarImage
+              {user.photoURL && <AvatarImage
                 src={user.photoURL ?? ""}
                 alt={user.displayName ?? "User"}
-              />
+              />}
               <AvatarFallback>
-                {user.displayName?.charAt(0) ?? user.email?.charAt(0)}
+                {initial.toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </Button>

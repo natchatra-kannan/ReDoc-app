@@ -3,14 +3,49 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase/config";
 import { RedactionDocument } from "@/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Timestamp } from "firebase/firestore";
+
+
+// Since we are faking auth, we'll also fake the documents for now.
+const createFakeDocuments = (userId: string): RedactionDocument[] => {
+    return [
+        {
+            id: '1',
+            userId: userId,
+            fileName: 'old-resume.pdf',
+            originalFileUrl: '#',
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+            status: 'completed',
+            llmUsed: 'GPT-3.5',
+        },
+        {
+            id: '2',
+            userId: userId,
+            fileName: 'project-notes.txt',
+            originalFileUrl: '#',
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+            status: 'completed',
+            llmUsed: 'LLaMA',
+        },
+        {
+            id: '3',
+            userId: userId,
+            fileName: 'sensitive-contract.docx',
+            originalFileUrl: '#',
+            createdAt: new Date(),
+            status: 'failed',
+            llmUsed: 'Gemma 2',
+            error: 'Failed to extract text.'
+        },
+    ];
+};
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -24,31 +59,13 @@ export default function DashboardPage() {
         router.replace("/login");
         return;
       }
-
-      const fetchDocuments = async () => {
-        if (user) {
-          setLoading(true);
-          try {
-            const q = query(
-              collection(db, "redactions"),
-              where("userId", "==", user.uid),
-              orderBy("createdAt", "desc")
-            );
-            const querySnapshot = await getDocs(q);
-            const docs = querySnapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            } as RedactionDocument));
-            setDocuments(docs);
-          } catch (error) {
-            console.error("Error fetching documents:", error);
-          } finally {
-            setLoading(false);
-          }
-        }
-      };
-
-      fetchDocuments();
+      
+      // Load fake documents
+      setLoading(true);
+      setTimeout(() => {
+        setDocuments(createFakeDocuments(user.uid));
+        setLoading(false);
+      }, 500); // Simulate network delay
     }
   }, [user, authLoading, router]);
 
@@ -63,8 +80,8 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-12" />
+                <div key={i} className="flex items-center space-x-4 p-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-[250px]" />
                     <Skeleton className="h-4 w-[200px]" />
@@ -104,8 +121,8 @@ export default function DashboardPage() {
                     <TableCell className="font-medium">{doc.fileName}</TableCell>
                     <TableCell>{doc.llmUsed || "N/A"}</TableCell>
                     <TableCell>
-                      {doc.createdAt instanceof Timestamp
-                        ? doc.createdAt.toDate().toLocaleDateString()
+                      {doc.createdAt instanceof Date
+                        ? doc.createdAt.toLocaleDateString()
                         : "Invalid Date"}
                     </TableCell>
                     <TableCell>

@@ -1,50 +1,44 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
-import { Skeleton } from "@/components/ui/skeleton";
+import React, { createContext, useContext, useState, ReactNode, useCallback } from "react";
+
+// This is a simplified user object, not the Firebase one.
+export type FakeUser = {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL?: string;
+};
 
 interface AuthContextType {
-  user: User | null;
+  user: FakeUser | null;
   loading: boolean;
+  login: (user: FakeUser) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: true,
+  loading: false,
+  login: () => {},
+  logout: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<FakeUser | null>(null);
+  // No real loading, so we can set it to false.
+  const loading = false;
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+  const login = useCallback((user: FakeUser) => {
+    setUser(user);
   }, []);
 
-  if (loading) {
-    return (
-        <div className="flex flex-col min-h-screen">
-            <header className="flex items-center justify-between p-4 border-b">
-                <Skeleton className="h-8 w-24" />
-                <Skeleton className="h-10 w-24" />
-            </header>
-            <main className="flex-1 container mx-auto p-4">
-                <Skeleton className="h-48 w-full" />
-                <Skeleton className="h-96 w-full mt-8" />
-            </main>
-        </div>
-    )
-  }
+  const logout = useCallback(() => {
+    setUser(null);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,14 +6,12 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -26,6 +24,7 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -37,30 +36,32 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     setError(null);
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({ title: "Success", description: "Logged in successfully." });
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message);
-    }
+    // Fake login
+    const fakeUser = {
+      uid: 'fake-user-id-' + Date.now(),
+      email: values.email,
+      displayName: values.email.split('@')[0],
+    };
+    login(fakeUser);
+    toast({ title: "Success", description: "Logged in successfully." });
+    router.push("/dashboard");
   };
   
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     setIsGoogleLoading(true);
     setError(null);
-    try {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        toast({ title: "Success", description: "Logged in successfully." });
-        router.push("/dashboard");
-    } catch (err: any) {
-        setError(err.message);
-    } finally {
-        setIsGoogleLoading(false);
-    }
+    // Fake Google sign in
+    const fakeUser = {
+        uid: 'fake-google-id-' + Date.now(),
+        email: 'user@google.com',
+        displayName: 'Google User',
+        photoURL: 'https://picsum.photos/seed/google/40/40'
+    };
+    login(fakeUser);
+    toast({ title: "Success", description: "Logged in successfully." });
+    router.push("/dashboard");
   }
 
   return (
