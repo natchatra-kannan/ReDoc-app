@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -28,6 +29,11 @@ export default function SignupPage() {
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,9 +94,11 @@ export default function SignupPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || form.formState.isSubmitting}>
-             {isGoogleLoading ? "Loading..." : "Sign up with Google"}
-          </Button>
+          {isClient && (
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || form.formState.isSubmitting}>
+              {isGoogleLoading ? "Loading..." : "Sign up with Google"}
+            </Button>
+          )}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
