@@ -1,5 +1,7 @@
+import Link from "next/link";
 import RedactionWorkflow from "@/components/redaction-workflow";
 import ShuffleText from "@/components/animations/ShuffleText";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -15,9 +17,11 @@ export default function Home() {
           <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground sm:max-w-3xl">
             Securely upload your documents and let our powerful AI find and redact sensitive information in seconds. Your privacy is our priority.
           </p>
-        </div>
-        <div className="mt-12">
-          <RedactionWorkflow />
+          <div className="mt-8 flex justify-center">
+            <Button asChild size="lg">
+              <Link href="/dashboard">Get Started</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>

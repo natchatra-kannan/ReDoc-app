@@ -8,8 +8,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShieldAlert } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import RedactionWorkflow from "@/components/redaction-workflow";
+import { Separator } from "@/components/ui/separator";
 
 // This function is now just a blueprint.
 const createFakeDocuments = (userId: string): RedactionDocument[] => {
@@ -31,16 +31,6 @@ const createFakeDocuments = (userId: string): RedactionDocument[] => {
             createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
             status: 'completed',
             llmUsed: 'LLaMA',
-        },
-        {
-            id: '3',
-            userId: userId,
-            fileName: 'sensitive-contract.docx',
-            originalFileUrl: '#',
-            createdAt: new Date(),
-            status: 'failed',
-            llmUsed: 'Gemma 2',
-            error: 'Failed to extract text.'
         },
     ];
 };
@@ -70,31 +60,25 @@ export default function DashboardPage() {
   if (authLoading || loading || !user) {
     return (
       <div className="container mx-auto py-10 px-4">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-1/2" />
-            <Skeleton className="h-4 w-3/4 mt-2" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 p-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+            <Skeleton className="h-10 w-1/4" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-64 w-full" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="container mx-auto py-10 px-4 space-y-8">
+        <div>
+            <h2 className="text-2xl font-bold tracking-tight">Redaction Tool</h2>
+            <p className="text-muted-foreground">Upload and process your documents here.</p>
+        </div>
+        <RedactionWorkflow />
+
+        <Separator />
+
       <Card>
         <CardHeader>
           <CardTitle>Redaction History</CardTitle>
@@ -140,15 +124,8 @@ export default function DashboardPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
-              <ShieldAlert className="w-16 h-16 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">No Redactions Yet</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Your redacted documents will appear here once you complete a redaction.
-              </p>
-              <Button asChild className="mt-6">
-                <a href="/">Start Redacting</a>
-              </Button>
+            <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">Your recent redactions will appear here.</p>
             </div>
           )}
         </CardContent>
