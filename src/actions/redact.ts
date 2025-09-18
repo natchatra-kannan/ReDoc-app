@@ -1,5 +1,6 @@
 "use server";
 
+import { generateAnonymizationReport } from "@/ai/flows/anonymization-report";
 import { redactPiiAndDisplayContent } from "@/ai/flows/redact-pii-and-display-content";
 import { summarizeContent } from "@/ai/flows/summarize-content";
 import { z } from "zod";
@@ -10,6 +11,7 @@ type RedactActionResult = {
   success: boolean;
   redactedContent?: string;
   summary?: string;
+  anonymizationReport?: { category: string; count: number }[];
   error?: string;
   documentId?: string;
 };
@@ -19,6 +21,7 @@ export async function redactDocument(formData: FormData): Promise<RedactActionRe
   const llm = formData.get("llm") as string;
   const userId = formData.get("userId") as string | null;
   const generateSummary = formData.get("generateSummary") === "true";
+  const generateReport = formData.get("generateAnonymizationReport") === "true";
 
   if (!file) {
     return { success: false, error: "No file provided." };
@@ -37,26 +40,32 @@ export async function redactDocument(formData: FormData): Promise<RedactActionRe
     // We can add this back later if real auth is restored.
     const docRefId = userId ? `fake-doc-${Date.now()}` : undefined;
 
+    const promises = [
+      redactPiiAndDisplayContent({
+        documentDataUri: dataURI,
+        llmSelection: parsedLlm.data,
+      }),
+    ];
 
-    const redactionPromise = redactPiiAndDisplayContent({
-      documentDataUri: dataURI,
-      llmSelection: parsedLlm.data,
-    });
+    if (generateSummary && userId) {
+      promises.push(summarizeContent({ documentDataUri: dataURI }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
 
-    const summaryPromise =
-      generateSummary && userId
-        ? summarizeContent({ documentDataUri: dataURI })
-        : Promise.resolve(null);
+    if (generateReport && userId) {
+      promises.push(generateAnonymizationReport({ documentDataUri: dataURI }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
 
-    const [redactionResult, summaryResult] = await Promise.all([
-      redactionPromise,
-      summaryPromise,
-    ]);
+    const [redactionResult, summaryResult, reportResult] = await Promise.all(promises);
     
     return {
       success: true,
-      redactedContent: redactionResult.redactedContent,
+      redactedContent: redactionResult!.redactedContent,
       summary: summaryResult?.summary,
+      anonymizationReport: reportResult?.report,
       documentId: docRefId,
     };
   } catch (e: any) {

@@ -14,11 +14,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { UploadCloud, FileText, Download, AlertCircle, Loader2, Sparkles, Quote } from "lucide-react";
+import { UploadCloud, FileText, Download, AlertCircle, Loader2, Sparkles, Quote, ClipboardList } from "lucide-react";
 import Image from "next/image";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 
 type Status = "idle" | "preview" | "redacting" | "success" | "error";
 type LLMOption = "GPT-3.5" | "LLaMA" | "Gemma 2";
+type AnonymizationReport = { category: string; count: number }[];
+
 
 export default function RedactionWorkflow() {
   const { user } = useAuth();
@@ -27,9 +30,11 @@ export default function RedactionWorkflow() {
   const [status, setStatus] = useState<Status>("idle");
   const [llm, setLlm] = useState<LLMOption>("GPT-3.5");
   const [generateSummary, setGenerateSummary] = useState(false);
+  const [generateAnonymizationReport, setGenerateAnonymizationReport] = useState(false);
   const [progress, setProgress] = useState(0);
   const [redactedContent, setRedactedContent] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
+  const [anonymizationReport, setAnonymizationReport] = useState<AnonymizationReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -39,6 +44,7 @@ export default function RedactionWorkflow() {
       setError(null);
       setRedactedContent(null);
       setSummary(null);
+      setAnonymizationReport(null);
     }
   }, []);
 
@@ -80,6 +86,9 @@ export default function RedactionWorkflow() {
     if (generateSummary) {
       formData.append("generateSummary", "true");
     }
+    if (generateAnonymizationReport) {
+      formData.append("generateAnonymizationReport", "true");
+    }
     
     // Simulate progress
     const interval = setInterval(() => {
@@ -94,6 +103,7 @@ export default function RedactionWorkflow() {
       if (result.success) {
         setRedactedContent(result.redactedContent!);
         setSummary(result.summary || null);
+        setAnonymizationReport(result.anonymizationReport || null);
         setStatus("success");
         toast({
           title: "Redaction Complete",
@@ -132,9 +142,11 @@ export default function RedactionWorkflow() {
     setStatus('idle');
     setRedactedContent(null);
     setSummary(null);
+    setAnonymizationReport(null);
     setError(null);
     setProgress(0);
     setGenerateSummary(false);
+    setGenerateAnonymizationReport(false);
   }
 
   return (
@@ -185,15 +197,27 @@ export default function RedactionWorkflow() {
                   </RadioGroup>
                   
                   {user && (
-                    <div className="flex items-center justify-between rounded-lg border p-3">
-                        <div className="flex items-center space-x-3">
-                           <Sparkles className="h-5 w-5 text-primary" />
-                           <div>
-                                <Label htmlFor="summary-switch" className="font-semibold">Generate AI Summary</Label>
-                                <p className="text-xs text-muted-foreground">Get a one-line summary of the document.</p>
-                           </div>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div className="flex items-center space-x-3">
+                               <Sparkles className="h-5 w-5 text-primary" />
+                               <div>
+                                    <Label htmlFor="summary-switch" className="font-semibold">Generate AI Summary</Label>
+                                    <p className="text-xs text-muted-foreground">Get a one-line summary of the document.</p>
+                               </div>
+                            </div>
+                            <Switch id="summary-switch" checked={generateSummary} onCheckedChange={setGenerateSummary} />
                         </div>
-                        <Switch id="summary-switch" checked={generateSummary} onCheckedChange={setGenerateSummary} />
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div className="flex items-center space-x-3">
+                               <ClipboardList className="h-5 w-5 text-primary" />
+                               <div>
+                                    <Label htmlFor="report-switch" className="font-semibold">Anonymization Report</Label>
+                                    <p className="text-xs text-muted-foreground">Get a report of redacted PII.</p>
+                               </div>
+                            </div>
+                            <Switch id="report-switch" checked={generateAnonymizationReport} onCheckedChange={setGenerateAnonymizationReport} />
+                        </div>
                     </div>
                   )}
 
@@ -215,6 +239,30 @@ export default function RedactionWorkflow() {
                           </div>
                         </div>
                       </div>
+                    )}
+                    {anonymizationReport && anonymizationReport.length > 0 && (
+                        <div className="space-y-2">
+                            <h4 className="font-semibold text-primary flex items-center">
+                                <ClipboardList className="h-5 w-5 mr-2" />
+                                Anonymization Report
+                            </h4>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>PII Category</TableHead>
+                                        <TableHead className="text-right">Count</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {anonymizationReport.map(item => (
+                                        <TableRow key={item.category}>
+                                            <TableCell>{item.category}</TableCell>
+                                            <TableCell className="text-right">{item.count}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                     <div className="p-4 border rounded-lg bg-muted/20 min-h-[300px] overflow-auto max-h-[70vh] whitespace-pre-wrap">
                         <div dangerouslySetInnerHTML={{ __html: redactedContent.replace(/\[REDACTED\]/g, '<span class="redacted-pii">[REDACTED]</span>') }} />
