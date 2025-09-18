@@ -11,9 +11,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { UploadCloud, FileText, Download, AlertCircle, Loader2 } from "lucide-react";
+import { UploadCloud, FileText, Download, AlertCircle, Loader2, Sparkles, Quote } from "lucide-react";
 import Image from "next/image";
 
 type Status = "idle" | "preview" | "redacting" | "success" | "error";
@@ -25,8 +26,10 @@ export default function RedactionWorkflow() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [llm, setLlm] = useState<LLMOption>("GPT-3.5");
+  const [generateSummary, setGenerateSummary] = useState(false);
   const [progress, setProgress] = useState(0);
   const [redactedContent, setRedactedContent] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -35,6 +38,7 @@ export default function RedactionWorkflow() {
       setStatus("preview");
       setError(null);
       setRedactedContent(null);
+      setSummary(null);
     }
   }, []);
 
@@ -73,6 +77,9 @@ export default function RedactionWorkflow() {
     if (user) {
       formData.append("userId", user.uid);
     }
+    if (generateSummary) {
+      formData.append("generateSummary", "true");
+    }
     
     // Simulate progress
     const interval = setInterval(() => {
@@ -86,10 +93,11 @@ export default function RedactionWorkflow() {
 
       if (result.success) {
         setRedactedContent(result.redactedContent!);
+        setSummary(result.summary || null);
         setStatus("success");
         toast({
           title: "Redaction Complete",
-          description: "Your document has been successfully redacted.",
+          description: "Your document has been successfully processed.",
         });
       } else {
         throw new Error(result.error);
@@ -100,7 +108,7 @@ export default function RedactionWorkflow() {
       setStatus("error");
       toast({
         variant: "destructive",
-        title: "Redaction Failed",
+        title: "Processing Failed",
         description: e.message || "Please try again.",
       });
     }
@@ -123,8 +131,10 @@ export default function RedactionWorkflow() {
     setFile(null);
     setStatus('idle');
     setRedactedContent(null);
+    setSummary(null);
     setError(null);
     setProgress(0);
+    setGenerateSummary(false);
   }
 
   return (
@@ -155,7 +165,7 @@ export default function RedactionWorkflow() {
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-2">{status === 'success' ? 'Redacted Document' : 'Redaction Options'}</h3>
+              <h3 className="text-lg font-semibold mb-2">{status === 'success' ? 'Processed Document' : 'Redaction Options'}</h3>
               {status === "preview" && (
                 <div className="space-y-6">
                   <p className="text-muted-foreground">Select an AI model to perform the redaction.</p>
@@ -173,20 +183,45 @@ export default function RedactionWorkflow() {
                       <Label htmlFor="llm-gemma">Gemma 2 (Academic & Multilingual)</Label>
                     </div>
                   </RadioGroup>
+                  
+                  {user && (
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="flex items-center space-x-3">
+                           <Sparkles className="h-5 w-5 text-primary" />
+                           <div>
+                                <Label htmlFor="summary-switch" className="font-semibold">Generate AI Summary</Label>
+                                <p className="text-xs text-muted-foreground">Get a one-line summary of the document.</p>
+                           </div>
+                        </div>
+                        <Switch id="summary-switch" checked={generateSummary} onCheckedChange={setGenerateSummary} />
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
-                    <Button onClick={handleRedact} className="w-full">Redact Document</Button>
+                    <Button onClick={handleRedact} className="w-full">Process Document</Button>
                     <Button onClick={resetWorkflow} variant="outline" className="w-full">Cancel</Button>
                   </div>
                 </div>
               )}
                {status === "success" && redactedContent && (
                  <div className="space-y-4">
+                    {summary && (
+                      <div className="p-4 border-l-4 border-primary bg-primary/10 rounded-r-lg">
+                        <div className="flex items-start">
+                          <Quote className="h-5 w-5 mr-3 text-primary flex-shrink-0" />
+                          <div>
+                            <h4 className="font-semibold text-primary">AI Summary</h4>
+                            <p className="text-sm italic text-foreground">{summary}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div className="p-4 border rounded-lg bg-muted/20 min-h-[300px] overflow-auto max-h-[70vh] whitespace-pre-wrap">
                         <div dangerouslySetInnerHTML={{ __html: redactedContent.replace(/\[REDACTED\]/g, '<span class="redacted-pii">[REDACTED]</span>') }} />
                     </div>
                     <div className="flex gap-2">
                       <Button onClick={handleDownload} className="w-full"><Download className="mr-2 h-4 w-4" /> Download</Button>
-                      <Button onClick={resetWorkflow} variant="outline" className="w-full">Redact Another</Button>
+                      <Button onClick={resetWorkflow} variant="outline" className="w-full">Process Another</Button>
                     </div>
                 </div>
               )}
@@ -197,7 +232,7 @@ export default function RedactionWorkflow() {
         {status === "redacting" && (
           <div className="flex flex-col items-center justify-center p-12 text-center">
             <Loader2 className="h-12 w-12 text-primary animate-spin" />
-            <p className="mt-4 font-semibold text-lg">Redacting document...</p>
+            <p className="mt-4 font-semibold text-lg">Processing document...</p>
             <p className="text-muted-foreground mt-1 text-sm">Please wait, this may take a moment.</p>
             <Progress value={progress} className="w-full max-w-sm mt-6" />
           </div>
@@ -206,7 +241,7 @@ export default function RedactionWorkflow() {
         {status === "error" && (
             <div className="flex flex-col items-center justify-center p-12 text-center">
                 <AlertCircle className="h-12 w-12 text-destructive" />
-                <p className="mt-4 font-semibold text-lg">Redaction Failed</p>
+                <p className="mt-4 font-semibold text-lg">Processing Failed</p>
                 <Alert variant="destructive" className="mt-4 max-w-md text-left">
                     <AlertTitle>Error Details</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>

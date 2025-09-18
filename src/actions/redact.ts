@@ -1,6 +1,7 @@
 "use server";
 
 import { redactPiiAndDisplayContent } from "@/ai/flows/redact-pii-and-display-content";
+import { summarizeContent } from "@/ai/flows/summarize-content";
 import { db, storage } from "@/lib/firebase/config";
 import { RedactionDocument } from "@/types";
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
@@ -12,6 +13,7 @@ const LlmEnum = z.enum(["GPT-3.5", "LLaMA", "Gemma 2"]);
 type RedactActionResult = {
   success: boolean;
   redactedContent?: string;
+  summary?: string;
   error?: string;
   documentId?: string;
 };
@@ -20,6 +22,7 @@ export async function redactDocument(formData: FormData): Promise<RedactActionRe
   const file = formData.get("file") as File;
   const llm = formData.get("llm") as string;
   const userId = formData.get("userId") as string | null;
+  const generateSummary = formData.get("generateSummary") === "true";
 
   if (!file) {
     return { success: false, error: "No file provided." };
@@ -54,10 +57,20 @@ export async function redactDocument(formData: FormData): Promise<RedactActionRe
       await updateDoc(doc(db, "redactions", docRefId), { originalFileUrl: downloadURL });
     }
 
-    const result = await redactPiiAndDisplayContent({
+    const redactionPromise = redactPiiAndDisplayContent({
       documentDataUri: dataURI,
       llmSelection: parsedLlm.data,
     });
+
+    const summaryPromise =
+      generateSummary && userId
+        ? summarizeContent({ documentDataUri: dataURI })
+        : Promise.resolve(null);
+
+    const [redactionResult, summaryResult] = await Promise.all([
+      redactionPromise,
+      summaryPromise,
+    ]);
     
     if (userId && docRefId) {
         await updateDoc(doc(db, "redactions", docRefId), { status: 'completed' });
@@ -65,7 +78,8 @@ export async function redactDocument(formData: FormData): Promise<RedactActionRe
 
     return {
       success: true,
-      redactedContent: result.redactedContent,
+      redactedContent: redactionResult.redactedContent,
+      summary: summaryResult?.summary,
       documentId: docRefId,
     };
   } catch (e: any) {
