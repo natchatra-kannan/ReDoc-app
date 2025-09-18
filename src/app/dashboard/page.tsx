@@ -8,7 +8,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import RedactionWorkflow from "@/components/redaction-workflow";
 import { Separator } from "@/components/ui/separator";
 
 // This function is now just a blueprint.
@@ -72,12 +71,9 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto py-10 px-4 space-y-8">
         <div>
-            <h2 className="text-2xl font-bold tracking-tight">Redaction Tool</h2>
-            <p className="text-muted-foreground">Upload and process your documents here.</p>
+            <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+            <p className="text-muted-foreground">Welcome back, {user.displayName || user.email}.</p>
         </div>
-        <RedactionWorkflow />
-
-        <Separator />
 
       <Card>
         <CardHeader>
