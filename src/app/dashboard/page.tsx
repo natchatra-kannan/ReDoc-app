@@ -8,12 +8,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Timestamp } from "firebase/firestore";
 
-
-// Since we are faking auth, we'll also fake the documents for now.
+// This function is now just a blueprint.
 const createFakeDocuments = (userId: string): RedactionDocument[] => {
     return [
         {
@@ -60,7 +58,7 @@ export default function DashboardPage() {
         return;
       }
       
-      // Load fake documents
+      // Generate and set fake documents on the client-side only
       setLoading(true);
       setTimeout(() => {
         setDocuments(createFakeDocuments(user.uid));
@@ -69,7 +67,7 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  if (authLoading || loading) {
+  if (authLoading || loading || !user) {
     return (
       <div className="container mx-auto py-10 px-4">
         <Card>
