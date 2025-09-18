@@ -38,32 +38,39 @@ export default function SignupPage() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     setError(null);
-    // Fake signup
-    const fakeUser = {
-      uid: 'fake-user-id-' + Date.now(),
-      email: values.email,
-      displayName: values.name,
-    };
-    login(fakeUser);
-    toast({ title: "Success", description: "Account created successfully." });
-    router.push("/dashboard");
+    try {
+      const fakeUser = {
+        uid: 'fake-user-id-' + Date.now(),
+        email: values.email,
+        displayName: values.name,
+      };
+      login(fakeUser);
+      toast({ title: "Success", description: "Account created successfully." });
+      router.push("/dashboard");
+    } catch (e: any) {
+        setError(e.message);
+    }
   };
   
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     setIsGoogleLoading(true);
     setError(null);
-    // Fake Google sign in
-    const fakeUser = {
-        uid: 'fake-google-id-' + Date.now(),
-        email: 'user@google.com',
-        displayName: 'Google User',
-        photoURL: 'https://picsum.photos/seed/google/40/40'
-    };
-    login(fakeUser);
-    toast({ title: "Success", description: "Account created and logged in." });
-    router.push("/dashboard");
+    try {
+      const fakeUser = {
+          uid: 'fake-google-id-' + Date.now(),
+          email: 'user@google.com',
+          displayName: 'Google User',
+          photoURL: 'https://picsum.photos/seed/google/40/40'
+      };
+      login(fakeUser);
+      toast({ title: "Success", description: "Account created and logged in." });
+      router.push("/dashboard");
+    } catch (e: any) {
+        setError(e.message);
+        setIsGoogleLoading(false);
+    }
   }
 
   return (
