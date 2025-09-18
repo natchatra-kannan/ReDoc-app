@@ -198,7 +198,7 @@ export default function RedactionWorkflow() {
                   )}
 
                   <div className="flex gap-2">
-                    <Button onClick={handleRedact} className="w-full">Process Document</Button>
+                    <Button onClick={handleRedact} className="w-full">Redact Document</Button>
                     <Button onClick={resetWorkflow} variant="outline" className="w-full">Cancel</Button>
                   </div>
                 </div>
